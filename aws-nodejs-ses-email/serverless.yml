@@ -1,0 +1,30 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: gogovisor
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: aws-nodejs-ses-email
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: aws-nodejs-ses-email
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-west-2
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - "ses:*"
+          Resource:
+            - "*"
+
+functions:
+  create:
+    handler: handler.createContact
+    events:
+      - http:
+          path: /contact-us
+          method: post
+          cors: true
+
+

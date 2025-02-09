@@ -1,4 +1,21 @@
 # AWS-Lambda-Projects
+There are two Lambda projects developed in this repo
+1. Customer Support Form using Next.js with AWS node.js Lambda and SES
+2. Thumbnail generation through AWS Lambda using Serverless framework
+
+
+## Customer Support Form using Next.js with AWS Lambda and SES
+folder: aws-nodejs-ses-email
+
+The aim of this project is to demonstrate the capability of using aws simple email service and lambda function. The next.js front-end was applied for a fast deployment for the customer support form.
+
+
+**Flow Diagram:**
+<br />
+![FlowDiagram](https://drive.google.com/uc?id=1f0ljnCvjjyHK3cp8fUbOx1gwo6GDJcPv)
+<br />
+Fig. A simple Node.js lambda functions with AWS SES support was applied to fulfill the above flow diagram. Next.js was used for the fast developement of the front-end.
+
 
 ## Thumbnail generation through AWS Lambda using Serverless framework
 folder: aws-python-thumbnail
