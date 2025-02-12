@@ -1,0 +1,131 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: gogovisor
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: aws-email-subscription-compaign
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: aws-email-subscription-compaign
+
+stages:
+  default:
+    params:
+      tableName: "users-table-${sls:stage}"
+
+custom:
+  region: ${self:provider.region}
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  region: us-west-2
+  stage: dev
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action: s3:*
+          Resource: "*"
+        - Effect: Allow
+          Action: SNS:Publish
+          Resource: !Ref QuotesMessages
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource:
+            - Fn::GetAtt: [UsersTable, Arn]
+  environment:
+    USERS_TABLE: ${param:tableName}
+    REGION: ${self:provider.region}
+    SNS_TOPIC_ARN: arn:aws:sns:us-west-2:832963582315:quotes-messages-dev
+    MAILCHIMP_TRANSACTIONAL_API_KEY: "api-key-to-be-filled-in"
+
+functions:
+  quotes:
+    handler: handler/getQuotes.getQuotes
+    events:
+      - http:
+          path: quotes
+          method: get
+          cors: true
+
+  subscribe:
+    handler: handler/subscribeUser.subscribeUser
+    events:
+      - http:
+          path: subscribe
+          method: post 
+          cors: true
+
+  staticMailer:
+    handler: handler/staticMailer.staticMailer
+    events:
+      - http:
+          path: static-mailer
+          method: post 
+          cors: true
+
+  mailChimp:
+    handler: handler/mailChimpSendEmail.mailChimpSendEmail
+    events:
+      - http:
+          path: sendEmail
+          method: post 
+          cors: true
+      - schedule: cron(0 18 * * ? *)
+
+  getSubscribers:
+    handler: handler/getSubscribers.getSubscribers
+    events:
+      - http:
+          path: getSubscribers
+          method: get 
+          cors: true 
+
+package:
+  #Enable Serverless Package Optimization
+  #individually: true
+  #excludeDevDependencies: true
+  exclude:
+    - front-end/**
+    - node_modules/aws-sdk/**  # AWS SDK v2 (already pre-installed)
+    - node_modules/.bin/**      # Unnecessary binaries
+    - node_modules/aws-sdk/lib/** # If using SDK v3
+    - node_modules/@aws-sdk/**  # Exclude all AWS SDK modules
+    - node_modules/@types/**    # TypeScript definitions (if not needed)
+    - test/**                   # Exclude test files
+    - docs/**                    # Documentation files
+
+resources:
+  Resources:
+    QuotesMessages:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: quotes-messages-${self:provider.stage}
+    QuotesMessagesSubscription:
+      Type: AWS::SNS::Subscription
+      Properties:
+        TopicArn: !Ref QuotesMessages
+        Protocol: email
+        Endpoint: customer.care@gogovisor.com
+        DeliveryPolicy: 
+          healthyRetryPolicy:
+            numRetries: 20
+            minDelayTarget: 30
+            maxDelayTarget: 600
+            backoffFunction: exponential
+
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: userId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: userId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        TableName: ${param:tableName}

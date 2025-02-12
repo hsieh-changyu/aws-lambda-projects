@@ -1,0 +1,11 @@
+{
+  "name": "aws-email-subscription-compaign",
+  "version": "1.0.0",
+  "description": "",
+  "dependencies": {
+    "@mailchimp/mailchimp_transactional": "^1.0.59",
+    "axios": "^1.7.9",
+    "serverless-http": "^3.2.0",
+    "uuid": "^11.0.5"
+  }
+}
